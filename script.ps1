@@ -21,6 +21,7 @@ $DefaultConfig = @{
     FixedDest    = ""
     LastUsedPath = ""
     UseArrowKeys = $false
+    AutoUpdate   = $false
 }
 
 function Format-NetworkPath {
@@ -501,17 +502,18 @@ function Show-Instructions {
 
 function Show-Settings {
     while ($true) {
-        if (-not $Config.ContainsKey('UseArrowKeys')) {
-            $Config['UseArrowKeys'] = $false
-            Save-Config
-        }
+        # Safeguard para configs antigas
+        if (-not $Config.ContainsKey('AutoUpdate')) { $Config['AutoUpdate'] = $false; Save-Config }
+        if (-not $Config.ContainsKey('UseArrowKeys')) { $Config['UseArrowKeys'] = $false; Save-Config }
 
+        # Prepara strings de exibição
         $srcText, $srcColor = if ([string]::IsNullOrWhiteSpace($Config.FixedSource)) { "Nenhum caminho definido", "Red" } else { $Config.FixedSource, "Gray" }
         $dstText, $dstColor = if ([string]::IsNullOrWhiteSpace($Config.FixedDest)) { "Nenhum caminho definido", "Red" } else { $Config.FixedDest, "Gray" }
         $lastText, $lastColor = if ([string]::IsNullOrWhiteSpace($Config.LastUsedPath)) { "Nenhum caminho definido", "Red" } else { $Config.LastUsedPath, "Gray" }
 
         if ($Config.UseArrowKeys) {
             $opts = @(
+                "[0] Alternar Atualizacao Automatica ($(if($Config.AutoUpdate){'ON'}else{'OFF'}))",
                 "[1] Alternar Confirmacao ($(if($Config.ConfirmReq){'ON'}else{'OFF'}))",
                 "[2] Alternar Pastas Extras ($(if($Config.AutoExtra){'ON'}else{'OFF'}))",
                 "[3] Alternar Auto-Preenchimento ($(if($Config.AutoFill){'ON'}else{'OFF'}))",
@@ -524,11 +526,11 @@ function Show-Settings {
             )
             $sel = Get-MenuChoice -Title "CONFIGURACOES" -Options $opts
             if ($sel -eq -1) { return }
-            $sel += 1
         } else {
             Clear-Host
             Write-Host "CONFIGURACOES" -ForegroundColor Cyan
             Write-Host "=========================="
+            Write-Host "Atualizacao Automatica:    $(if($Config.AutoUpdate){'Habilitado'}else{'Desabilitado'})"
             Write-Host "Pedido de Confirmacao:     $(if($Config.ConfirmReq){'Habilitado'}else{'Desabilitado'})"
             Write-Host "Pastas Extras Automaticas: $(if($Config.AutoExtra){'Habilitado'}else{'Desabilitado'})"
             Write-Host "Auto-Preenchimento:        $(if($Config.AutoFill){'Habilitado'}else{'Desabilitado'})"
@@ -540,6 +542,7 @@ function Show-Settings {
             Write-Host "Ultimo Caminho Utilizado:"
             Write-Host "  $lastText" -ForegroundColor $lastColor
             Write-Host "=========================="
+            Write-Host "[0] Alternar Atualizacao Automatica"
             Write-Host "[1] Alternar Confirmacao"
             Write-Host "[2] Alternar Pastas Extras"
             Write-Host "[3] Alternar Auto-Preenchimento"
@@ -558,17 +561,17 @@ function Show-Settings {
             if ($sel -eq '4' -or $sel -eq '5') { Write-Host "" }
         }
 
-        switch ($sel) {
-            1 { $Config.ConfirmReq = -not $Config.ConfirmReq; Save-Config; Write-Host "Confirmacao alterada."; Start-Sleep -Milliseconds 800 }
-            2 { $Config.AutoExtra = -not $Config.AutoExtra; Save-Config; Write-Host "Pastas extras alteradas."; Start-Sleep -Milliseconds 800 }
-            3 { $Config.AutoFill = -not $Config.AutoFill; Save-Config; Write-Host "Auto-preenchimento alterado."; Start-Sleep -Milliseconds 800 }
-            4 { $p = (Read-Host "Caminho de origem").Trim(); if($p){$Config.FixedSource=$p;Save-Config}; Write-Host "Origem salva."; Start-Sleep -Milliseconds 800 }
-            5 { $p = (Read-Host "Caminho de destino").Trim(); if($p){$Config.FixedDest=$p;Save-Config}; Write-Host "Destino salvo."; Start-Sleep -Milliseconds 800 }
-            6 { $Config.FixedSource=""; $Config.FixedDest=""; Save-Config; Write-Host "Caminhos fixos removidos."; Start-Sleep -Milliseconds 800 }
-            7 { $Config.LastUsedPath=""; Save-Config; Write-Host "Ultimo caminho limpo."; Start-Sleep -Milliseconds 800 }
-            8 { $Config.UseArrowKeys = -not $Config.UseArrowKeys; Save-Config; $st = if($Config.UseArrowKeys){"ATIVADA"}else{"DESATIVADA"}; Write-Host "Navegacao por setas $st."; Start-Sleep -Milliseconds 1000 }
-            9 { return }
-            -1 { return }
+        switch ([string]$sel) {
+            '0' { $Config.AutoUpdate = -not $Config.AutoUpdate; Save-Config; Write-Host "Atualizacao automatica alterada para $(if($Config.AutoUpdate){'ON'}else{'OFF'})."; Start-Sleep -Milliseconds 800 }
+            '1' { $Config.ConfirmReq = -not $Config.ConfirmReq; Save-Config; Write-Host "Confirmacao alterada."; Start-Sleep -Milliseconds 800 }
+            '2' { $Config.AutoExtra = -not $Config.AutoExtra; Save-Config; Write-Host "Pastas extras alteradas."; Start-Sleep -Milliseconds 800 }
+            '3' { $Config.AutoFill = -not $Config.AutoFill; Save-Config; Write-Host "Auto-preenchimento alterado."; Start-Sleep -Milliseconds 800 }
+            '4' { $p = (Read-Host "Caminho de origem").Trim(); if($p){$Config.FixedSource=$p;Save-Config}; Write-Host "Origem salva."; Start-Sleep -Milliseconds 800 }
+            '5' { $p = (Read-Host "Caminho de destino").Trim(); if($p){$Config.FixedDest=$p;Save-Config}; Write-Host "Destino salvo."; Start-Sleep -Milliseconds 800 }
+            '6' { $Config.FixedSource=""; $Config.FixedDest=""; Save-Config; Write-Host "Caminhos fixos removidos."; Start-Sleep -Milliseconds 800 }
+            '7' { $Config.LastUsedPath=""; Save-Config; Write-Host "Ultimo caminho limpo."; Start-Sleep -Milliseconds 800 }
+            '8' { $Config.UseArrowKeys = -not $Config.UseArrowKeys; Save-Config; Write-Host "Navegacao por setas $(if($Config.UseArrowKeys){'ATIVADA'}else{'DESATIVADA'})."; Start-Sleep -Milliseconds 1000 }
+            '9' { return }
             default { Write-Host "Opcao invalida!"; Start-Sleep -Milliseconds 500 }
         }
     }
