@@ -782,6 +782,253 @@ function Run-Reverse {
     Wait-Input
 }
 
+
+# ============================================
+# CONTROLE DE VERSOES
+# ============================================
+
+function Show-VersionControl {
+    $subOptions = @(
+        "[0] Ver versao atual",
+        "[1] Buscar versoes no GitHub",
+        "[2] Listar backups locais",
+        "[3] Restaurar backup local",
+        "[4] Baixar versao especifica do GitHub",
+        "[5] Voltar"
+    )
+    
+    do {
+        $subChoice = Get-MenuChoice -Title "CONTROLE DE VERSOES" -Options $subOptions
+        
+        switch ($subChoice) {
+            0 {
+                # Ver versao atual
+                Write-Host ""
+                Write-Host "=== Versao Atual ===" -ForegroundColor Cyan
+                $ver = $null
+                $versionFile = Join-Path $AppDir "version.txt"
+                if (Test-Path $versionFile) {
+                    $ver = (Get-Content $versionFile -Raw -ErrorAction SilentlyContinue).Trim()
+                }
+                if ($ver) {
+                    Write-Host "  Versao: $ver" -ForegroundColor Green
+                } else {
+                    Write-Host "  Versao: Nao definida" -ForegroundColor Yellow
+                }
+                $scriptPath = Join-Path $AppDir "script.ps1"
+                $updaterPath = Join-Path $AppDir "Updater.ps1"
+                if (Test-Path $scriptPath) {
+                    Write-Host "  Script: $((Get-Item $scriptPath).LastWriteTime)" -ForegroundColor Gray
+                }
+                if (Test-Path $updaterPath) {
+                    Write-Host "  Updater: $((Get-Item $updaterPath).LastWriteTime)" -ForegroundColor Gray
+                }
+                Write-Host ""
+                Wait-Input
+            }
+            1 {
+                # Buscar versoes no GitHub
+                Write-Host ""
+                Write-Host "=== Buscando versoes no GitHub ===" -ForegroundColor Cyan
+                try {
+                    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+                    $headers = @{"User-Agent" = "OrganizadorPOSTECH"; "Accept" = "application/vnd.github.v3+json"}
+                    $releases = Invoke-RestMethod -Uri "https://api.github.com/repos/DyFuchs/Organizador_POSTECH/releases" -Headers $headers -TimeoutSec 15
+                    if ($releases.Count -eq 0) {
+                        Write-Host "  Nenhuma release publica encontrada." -ForegroundColor Yellow
+                    } else {
+                        Write-Host "  Versoes disponiveis:" -ForegroundColor Green
+                        for ($i = 0; $i -lt $releases.Count; $i++) {
+                            $r = $releases[$i]
+                            $tag = $r.tag_name
+                            $date = $r.published_at.Substring(0, 10)
+                            $pre = if ($r.prerelease) { " [PRE-RELEASE]" } else { "" }
+                            Write-Host "    [$i] $tag ($date)$pre" -ForegroundColor White
+                        }
+                    }
+                } catch {
+                    Write-Host "  Erro ao buscar: $($_.Exception.Message)" -ForegroundColor Red
+                    Write-Host "  Verifique sua conexao com a internet." -ForegroundColor Yellow
+                }
+                Write-Host ""
+                Wait-Input
+            }
+            2 {
+                # Listar backups locais
+                Write-Host ""
+                Write-Host "=== Backups Locais ===" -ForegroundColor Cyan
+                $backupDir = Join-Path $AppDir "_backup"
+                if (-not (Test-Path $backupDir)) {
+                    Write-Host "  Nenhum backup encontrado." -ForegroundColor Yellow
+                } else {
+                    $backups = Get-ChildItem $backupDir -Directory | Sort-Object LastWriteTime -Descending
+                    if ($backups.Count -eq 0) {
+                        Write-Host "  Nenhum backup encontrado." -ForegroundColor Yellow
+                    } else {
+                        Write-Host "  Backups disponiveis:" -ForegroundColor Green
+                        for ($i = 0; $i -lt $backups.Count; $i++) {
+                            $b = $backups[$i]
+                            $size = (Get-ChildItem $b.FullName -Recurse -File | Measure-Object -Property Length -Sum).Sum
+                            $sizeMB = [math]::Round($size / 1MB, 2)
+                            Write-Host "    [$i] $($b.Name) ($sizeMB MB)" -ForegroundColor White
+                        }
+                    }
+                }
+                Write-Host ""
+                Wait-Input
+            }
+            3 {
+                # Restaurar backup local
+                Write-Host ""
+                Write-Host "=== Restaurar Backup ===" -ForegroundColor Cyan
+                $backupDir = Join-Path $AppDir "_backup"
+                if (-not (Test-Path $backupDir)) {
+                    Write-Host "  Nenhum backup encontrado." -ForegroundColor Yellow
+                    Wait-Input
+                    continue
+                }
+                $backups = Get-ChildItem $backupDir -Directory | Sort-Object LastWriteTime -Descending
+                if ($backups.Count -eq 0) {
+                    Write-Host "  Nenhum backup encontrado." -ForegroundColor Yellow
+                    Wait-Input
+                    continue
+                }
+                Write-Host "  Backups disponiveis:" -ForegroundColor Green
+                for ($i = 0; $i -lt $backups.Count; $i++) {
+                    Write-Host "    [$i] $($backups[$i].Name)" -ForegroundColor White
+                }
+                Write-Host ""
+                $sel = Read-Host "  Escolha o numero do backup (ou C para cancelar)"
+                if ($sel -eq "C" -or $sel -eq "c") { continue }
+                $idx = [int]$sel
+                if ($idx -lt 0 -or $idx -ge $backups.Count) {
+                    Write-Host "  Opcao invalida!" -ForegroundColor Red
+                    Start-Sleep -Milliseconds 500
+                    continue
+                }
+                $chosen = $backups[$idx]
+                Write-Host ""
+                Write-Host "  Backup escolhido: $($chosen.Name)" -ForegroundColor Yellow
+                $confirm = Read-Host "  Confirma a restauracao? Os arquivos atuais serao substituidos. [S/N]"
+                if ($confirm -ne "S" -and $confirm -ne "s") {
+                    Write-Host "  Cancelado." -ForegroundColor Yellow
+                    Start-Sleep -Milliseconds 500
+                    continue
+                }
+                $files = @("script.ps1", "Updater.ps1", "config.json", "version.txt")
+                foreach ($f in $files) {
+                    $src = Join-Path $chosen.FullName $f
+                    $dest = Join-Path $AppDir $f
+                    if (Test-Path $src) {
+                        Copy-Item $src $dest -Force
+                        Write-Host "  Restaurado: $f" -ForegroundColor Green
+                    }
+                }
+                Write-Host ""
+                Write-Host "  Restauracao concluida!" -ForegroundColor Green
+                Write-Host "  Reinicie a aplicacao para usar a versao restaurada." -ForegroundColor Yellow
+                Write-Host ""
+                Wait-Input
+            }
+            4 {
+                # Baixar versao especifica do GitHub
+                Write-Host ""
+                Write-Host "=== Baixar Versao Especifica ===" -ForegroundColor Cyan
+                try {
+                    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+                    $headers = @{"User-Agent" = "OrganizadorPOSTECH"; "Accept" = "application/vnd.github.v3+json"}
+                    $releases = Invoke-RestMethod -Uri "https://api.github.com/repos/DyFuchs/Organizador_POSTECH/releases" -Headers $headers -TimeoutSec 15
+                    if ($releases.Count -eq 0) {
+                        Write-Host "  Nenhuma release publica encontrada." -ForegroundColor Yellow
+                        Wait-Input
+                        continue
+                    }
+                    Write-Host "  Versoes disponiveis:" -ForegroundColor Green
+                    for ($i = 0; $i -lt $releases.Count; $i++) {
+                        $r = $releases[$i]
+                        $pre = if ($r.prerelease) { " [PRE-RELEASE]" } else { "" }
+                        Write-Host "    [$i] $($r.tag_name) ($($r.published_at.Substring(0,10)))$pre" -ForegroundColor White
+                    }
+                    Write-Host ""
+                    $sel = Read-Host "  Escolha o numero da versao (ou C para cancelar)"
+                    if ($sel -eq "C" -or $sel -eq "c") { continue }
+                    $idx = [int]$sel
+                    if ($idx -lt 0 -or $idx -ge $releases.Count) {
+                        Write-Host "  Opcao invalida!" -ForegroundColor Red
+                        Start-Sleep -Milliseconds 500
+                        continue
+                    }
+                    $chosen = $releases[$idx]
+                    Write-Host ""
+                    Write-Host "  Versao escolhida: $($chosen.tag_name)" -ForegroundColor Yellow
+                    $confirm = Read-Host "  Confirma o download e instalacao? [S/N]"
+                    if ($confirm -ne "S" -and $confirm -ne "s") {
+                        Write-Host "  Cancelado." -ForegroundColor Yellow
+                        Start-Sleep -Milliseconds 500
+                        continue
+                    }
+                    # Criar backup antes de substituir
+                    $backupDir = Join-Path $AppDir "_backupackup_$(Get-Date -Format "yyyyMMdd_HHmmss")"
+                    New-Item $backupDir -ItemType Directory -Force | Out-Null
+                    $files = @("script.ps1", "Updater.ps1", "config.json", "version.txt")
+                    foreach ($f in $files) {
+                        $src = Join-Path $AppDir $f
+                        if (Test-Path $src) {
+                            Copy-Item $src $backupDir -Force
+                        }
+                    }
+                    Write-Host "  Backup criado em: $backupDir" -ForegroundColor Green
+                    # Baixar ZIP da release (preferir asset, fallback para zipball)
+                    if ($chosen.assets -and $chosen.assets.Count -gt 0) {
+                        $asset = $chosen.assets | Where-Object { $_.name -like "*.zip" } | Select-Object -First 1
+                        if ($asset) {
+                            $zipUrl = $asset.browser_download_url
+                        } else {
+                            $zipUrl = $chosen.zipball_url
+                        }
+                    } else {
+                        $zipUrl = $chosen.zipball_url
+                    }
+                    $zipPath = Join-Path $env:TEMP "organizador_$($chosen.tag_name).zip"
+                    Write-Host "  Baixando..." -ForegroundColor Cyan
+                    Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath -Headers $headers -UseBasicParsing
+                    # Extrair
+                    $extractPath = Join-Path $env:TEMP "organizador_extract"
+                    if (Test-Path $extractPath) { Remove-Item $extractPath -Recurse -Force }
+                    Expand-Archive $zipPath $extractPath -Force
+                    # Encontrar a subpasta extraida
+                    $extractedDir = Get-ChildItem $extractPath -Directory | Select-Object -First 1
+                    if ($extractedDir) {
+                        foreach ($f in $files) {
+                            $src = Join-Path $extractedDir.FullName $f
+                            $dest = Join-Path $AppDir $f
+                            if (Test-Path $src) {
+                                Copy-Item $src $dest -Force
+                                Write-Host "  Instalado: $f" -ForegroundColor Green
+                            }
+                        }
+                    }
+                    # Limpar temporarios
+                    Remove-Item $zipPath -Force -ErrorAction SilentlyContinue
+                    Remove-Item $extractPath -Recurse -Force -ErrorAction SilentlyContinue
+                    # Atualizar version.txt
+                    $chosen.tag_name | Set-Content (Join-Path $AppDir "version.txt") -Encoding UTF8
+                    Write-Host ""
+                    Write-Host "  Instalacao concluida!" -ForegroundColor Green
+                    Write-Host "  Reinicie a aplicacao para usar a nova versao." -ForegroundColor Yellow
+                } catch {
+                    Write-Host "  Erro: $($_.Exception.Message)" -ForegroundColor Red
+                }
+                Write-Host ""
+                Wait-Input
+            }
+            5 { return }
+            -1 { continue }
+        }
+    } while ($true)
+}
+
+
 # Menu Loop
 do {
     # Lógica de exibição do caminho
@@ -798,9 +1045,9 @@ do {
             "[5] Creditos",
             "[6] Modo Reverso",
             "[7] Gerar Relatorio",
-            "[8] Sair"
-        )
-        # O caminho agora é passado como subtítulo e redesenhado a cada ciclo
+            "[8] Controle de Versoes",
+            "[9] Sair"
+        )# O caminho agora é passado como subtítulo e redesenhado a cada ciclo
         $choice = Get-MenuChoice -Title "ORGANIZADOR DE PASTAS POSTECH v$Version" -Options $mainOptions -InfoLine $pathInfo
 
         switch ($choice) {
@@ -811,7 +1058,8 @@ do {
             4 { Show-Credits }
             5 { Run-Reverse }
             6 { Gerar-Relatorio }
-            7 { exit }
+            7 { Show-VersionControl }
+            8 { exit }
             -1 { continue }
         }
     } else {
@@ -825,7 +1073,8 @@ do {
         Write-Host "[5] Creditos"
         Write-Host "[6] Modo Reverso"
         Write-Host "[7] Gerar Relatorio"
-        Write-Host "[8] Sair"
+        Write-Host "[8] Controle de Versoes"
+        Write-Host "[9] Sair"
         Write-Host "==========================" -NoNewline
 
         $key = [Console]::ReadKey($true)
@@ -840,7 +1089,8 @@ do {
             '5' { Show-Credits }
             '6' { Run-Reverse }
             '7' { Gerar-Relatorio }
-            '8' { exit }
+            '8' { Show-VersionControl }
+            '9' { exit }
             default { Write-Host "Opcao invalida!"; Start-Sleep -Milliseconds 500 }
         }
     }
