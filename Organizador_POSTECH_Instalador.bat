@@ -9,17 +9,15 @@ set "REPO=DyFuchs/Organizador_POSTECH"
 set "BRANCH=main"
 
 :: LOGICA DE DIRETORIO PADRAO
-:: 1. Se houver um argumento (%1), usa ele (passado pelo CMD do usuario)
-:: 2. Se nao, usa a pasta onde o instalador reside (%~dp0)
+:: %~1 remove as aspas do primeiro argumento se elas existirem
 if "%~1"=="" (
     set "DEFAULT_DIR=%~dp0"
 ) else (
     set "DEFAULT_DIR=%~1"
 )
 
-:: Remove aspas se existirem
+:: Limpeza de segurança: Remove aspas redundantes e barra final
 set "DEFAULT_DIR=%DEFAULT_DIR:"=%"
-:: Remove barra final se existir
 if "%DEFAULT_DIR:~-1%"=="\" set "DEFAULT_DIR=%DEFAULT_DIR:~0,-1%"
 
 :: ==============================================================================
@@ -38,7 +36,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-:: VERIFICAR CURL (Nativo Windows 10+)
+:: VERIFICAR CURL
 where curl.exe >nul 2>&1
 if errorlevel 1 (
     set "USE_CURL=0"
@@ -83,7 +81,7 @@ if exist "%INSTALL_DIR%" (
     )
 )
 
-:: Criar pasta de instalacao
+:: Criar pasta de instalacao (com aspas para suportar espaços)
 mkdir "%INSTALL_DIR%" 2>nul
 
 :: ==============================================================================
@@ -142,7 +140,7 @@ echo.
 echo    Local: %INSTALL_DIR%
 echo    Atalho criado na Area de Trabalho
 echo.
-set /p "EXEC=    Deseja executar a aplicacao agora? [S/N]: "
+set /p "EXEC=    Deseja executar a aplicacao agora? [S/N]:, "
 if /i "!EXEC!"=="S" (
     start "" "%INSTALL_DIR%\Iniciar Organizador POSTECH.bat"
 )
