@@ -9,15 +9,17 @@ set "REPO=DyFuchs/Organizador_POSTECH"
 set "BRANCH=main"
 
 :: LOGICA DE DIRETORIO PADRAO
-:: %~1 remove as aspas do primeiro argumento se elas existirem
 if "%~1"=="" (
     set "DEFAULT_DIR=%~dp0"
 ) else (
     set "DEFAULT_DIR=%~1"
 )
 
-:: Limpeza de segurança: Remove aspas redundantes e barra final
+:: LIMPEZA ULTRA-ROBUSTA
+:: Remove aspas duplas (") e aspas simples (') do caminho
 set "DEFAULT_DIR=%DEFAULT_DIR:"=%"
+set "DEFAULT_DIR=%DEFAULT_DIR:'=%"
+:: Remove barra final se existir
 if "%DEFAULT_DIR:~-1%"=="\" set "DEFAULT_DIR=%DEFAULT_DIR:~0,-1%"
 
 :: ==============================================================================
