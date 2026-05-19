@@ -1,4 +1,3 @@
-Aqui está um README.md completo e detalhado para o seu projeto:
 
 ```markdown
 # Organizador de Pastas POSTECH
