@@ -1,8 +1,6 @@
 # Updater.ps1 - Versão Dinâmica Simplificada
 param([switch]$Force)
 
-param([switch]$Force)
-
 # === AUTO-VERIFICAÇÃO DE CONFIGURAÇÃO ===
 $ConfigPath = Join-Path $PSScriptRoot "config.json"
 $ShouldUpdate = $Force
