@@ -12,7 +12,11 @@ Clique na barra de endereços da pasta, digite cmd e aperte Enter. Isso abrirá 
 Copie e cole o comando abaixo e aperte Enter:
 powershell
 
-```powershell -NoProfile -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $content = Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/DyFuchs/Organizador_POSTECH/main/Organizador_POSTECH_Instalador.bat' -UserAgent 'OrganizadorPOSTECH'; [System.IO.File]::WriteAllText(\"$env:TEMP\Organizador_POSTECH_Instalador.bat\", $content.Content, [System.Text.Encoding]::ASCII); $env:INSTALL_PATH = $pwd; Start-Process \"$env:TEMP\Organizador_POSTECH_Instalador.bat\""```
+```javascript
+const copiarTexto = "powershell -NoProfile -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $content = Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/DyFuchs/Organizador_POSTECH/main/Organizador_POSTECH_Instalador.bat' -UserAgent 'OrganizadorPOSTECH'; [System.IO.File]::WriteAllText(\"$env:TEMP\Organizador_POSTECH_Instalador.bat\", $content.Content, [System.Text.Encoding]::ASCII); $env:INSTALL_PATH = $pwd; Start-Process \"$env:TEMP\Organizador_POSTECH_Instalador.bat\""";
+console.log(copiarTexto);
+```
+
 
 # 🛠️ Como funciona o Instalador?
 Assim que você rodar o comando acima, o Assistente de Instalação será iniciado:
