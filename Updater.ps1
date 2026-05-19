@@ -1,5 +1,5 @@
 <#
-Updater.ps1 - Verifica atualizações nos Releases e aplica com confirmação do usuário
+Updater.ps1 - Verifica atualizações nos Releases e aplica com confirmação
 #>
 param([switch]$Force)
 
@@ -43,10 +43,12 @@ try {
     
     if (-not $latest) { Write-Status "Nenhuma release publica encontrada." "Yellow"; return }
     
-    $asset = $latest.assets | Where-Object { $_.name -like "*Organizador*.zip" -and $_.name -match '\d+\.\d+\.\d+' } | Select-Object -First 1
-    if (-not $asset) { Write-Status "ZIP valido nao encontrado na release $($latest.tag_name)." "Yellow"; return }
+    # Busca qualquer ZIP que pareça ser a aplicação
+    $asset = $latest.assets | Where-Object { $_.name -like "*.zip" } | Select-Object -First 1
+    if (-not $asset) { Write-Status "Nenhum arquivo ZIP encontrado na release." "Yellow"; return }
     
-    $remoteVer = if ($asset.name -match '(\d+\.\d+\.\d+)') { $Matches[1] } else { "unknown" }
+    # Tenta extrair versão do nome do arquivo
+    $remoteVer = if ($asset.name -match '(\d+\.\d+\.\d+)') { $Matches[1] } else { "latest" }
 } catch {
     Write-Status "Falha ao consultar GitHub: $($_.Exception.Message)" "Red"
     return
@@ -56,7 +58,8 @@ try {
 try {
     $isNewer = ([version]$remoteVer -gt [version]$localVer)
 } catch {
-    $isNewer = $false
+    # Se não conseguir comparar (ex: "latest" vs "1.0.0"), assume que é novo para garantir
+    $isNewer = $true 
 }
 
 if (-not $isNewer) {
@@ -74,16 +77,23 @@ if ($response.ToUpper() -ne 'S') {
 
 Write-Status "Iniciando processo de atualizacao..." "Cyan"
 
-# 6. Cria backup
+# 6. Cria backup de TODOS os arquivos
 $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
 $backupPath = Join-Path $BackupDir "backup_v${localVer}_$timestamp"
 New-Item -Path $backupPath -ItemType Directory -Force | Out-Null
-$filesToBackup = @("script.ps1", "Updater.ps1", "config.json", "version.txt", "Launch.bat")
-foreach ($f in $filesToBackup) {
-    $src = Join-Path $AppDir $f
-    if (Test-Path $src) { Copy-Item $src $backupPath -Force -ErrorAction SilentlyContinue }
+
+Write-Status "Criando backup completo (todos os arquivos)..." "Gray"
+Get-ChildItem -Path $AppDir -File | Where-Object { 
+    # Exclui a propria pasta de backup e arquivos temporarios
+    $_.DirectoryName -ne $BackupDir -and $_.Name -notlike "*.tmp" 
+} | ForEach-Object {
+    try {
+        Copy-Item $_.FullName -Destination $backupPath -Force -ErrorAction Stop
+    } catch {
+        Write-Status "  Aviso: Nao foi possivel copiar $($_.Name) (arquivo em uso?)" "Yellow"
+    }
 }
-Write-Status "Backup criado: $backupPath" "Green"
+Write-Status "Backup salvo em: $backupPath" "Green"
 
 # 7. Download
 try {
@@ -106,12 +116,15 @@ try {
 
 # 9. Substituição de arquivos
 try {
+    # Procura o script principal para identificar a raiz do extraido
     $extractedScript = Get-ChildItem $TempDir -Filter "script.ps1" -Recurse -File | Select-Object -First 1
-    if (-not $extractedScript) { throw "script.ps1 nao encontrado no pacote" }
+    if (-not $extractedScript) { throw "script.ps1 nao encontrado no pacote baixado" }
     
     $sourceRoot = $extractedScript.DirectoryName
+    
+    # Copia tudo do extraido para a pasta atual
     Get-ChildItem $sourceRoot | ForEach-Object {
-        Copy-Item $_.FullName $AppDir -Recurse -Force -ErrorAction Stop
+        Copy-Item $_.FullName -Destination $AppDir -Recurse -Force -ErrorAction Stop
     }
 } catch {
     Write-Status "Falha ao aplicar atualizacao: $($_.Exception.Message)" "Red"
