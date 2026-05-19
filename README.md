@@ -6,7 +6,8 @@
 [![PowerShell](https://img.shields.io/badge/PowerShell-5.1+-blue)](https://github.com/PowerShell/PowerShell)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-Ferramenta de automação em PowerShell para organização inteligente de vídeos acadêmicos e corporativos, desenvolvida para padronizar a estrutura de pastas de cursos da FIAP/POSTECH.
+Ferramenta de automação em PowerShell para organização inteligente de vídeos acadêmicos e corporativos,
+desenvolvida para padronizar a estrutura de pastas de cursos da FIAP/POSTECH.
 
 ## 📋 Índice
 
@@ -26,7 +27,11 @@ Ferramenta de automação em PowerShell para organização inteligente de vídeo
 
 ## 📖 Sobre
 
-O **Organizador de Pastas POSTECH** automatiza o processo de organização de vídeos de cursos, eliminando o trabalho manual repetitivo e garantindo padronização na estrutura de diretórios. A ferramenta detecta automaticamente padrões de nomenclatura nos arquivos de vídeo e os organiza em pastas correspondentes, gerando relatórios detalhados com duração e localização de cada arquivo.
+O **Organizador de Pastas POSTECH** automatiza o processo de organização de vídeos de cursos,
+eliminando o trabalho manual repetitivo e garantindo padronização na estrutura de diretórios.
+A ferramenta detecta automaticamente padrões de nomenclatura nos arquivos de vídeo
+e os organiza em pastas correspondentes, gerando relatórios detalhados
+com duração e localização de cada arquivo.
 
 ### Casos de Uso
 - Organização de materiais de cursos EAD (Ensino a Distância)
@@ -37,17 +42,21 @@ O **Organizador de Pastas POSTECH** automatiza o processo de organização de v�
 ## ✨ Funcionalidades
 
 ### Organização Inteligente
-- **Detecção Automática**: Identifica padrões como "Aula N", "Boas Vindas" nos nomes dos arquivos
+- **Detecção Automática**: Identifica padrões como "Aula N",
+"Boas Vindas" nos nomes dos arquivos
 - **Múltiplos Formatos**: Suporta MP4, MKV, AVI, MOV, WMV, FLV, WEBM
-- **Criação Automática**: Gera pastas numeradas (Aula 1, Aula 2, etc.) e pastas extras (Capítulo de Projeto, Onboarding)
-- **Modo Reverso**: Desfaz a organização, movendo vídeos de volta para a raiz e limpando pastas
+- **Criação Automática**: Gera pastas numeradas (Aula 1, Aula 2, etc.)
+e pastas extras (Capítulo de Projeto, Onboarding)
+- **Modo Reverso**: Desfaz a organização, movendo vídeos de
+volta para a raiz e limpando pastas
 
 ### Relatórios Detalhados
 - **Duração por Vídeo**: Extrai metadados nativos do Windows sem software externo
 - **Duração Total**: Soma o tempo total em HH:MM:SS e minutos decimais
 - **Duração por Pasta**: Agrega o tempo de cada capítulo/aula
 - **Mapeamento de Rede**: Converte caminhos UNC (\\IP\) para unidades mapeadas (T:\)
-- **Versionamento**: Gera relatórios numerados automaticamente (Relatorio_Organizacao (1).txt, (2).txt...)
+- **Versionamento**: Gera relatórios numerados
+automaticamente (Relatorio_Organizacao (1).txt, (2).txt...)
 
 ### Interface Flexível
 - **Navegação por Teclas**: Seleção instantânea (sem precisar pressionar Enter)
@@ -158,7 +167,8 @@ Após a instalação, execute o `Launch.bat`. Na primeira execução:
 
 2. **Configure as preferências** (opcional):
    - Pressione `[3]` para acessar Configurações
-   - Ajuste as opções conforme necessário (veja seção [Configurações](#-configurações))
+   - Ajuste as opções conforme necessário
+     (veja seção [Configurações](#-configurações))
    - Pressione `[9]` para voltar ao menu principal
 
 3. **Organize seus vídeos**:
@@ -206,7 +216,8 @@ Após organização:
 
 **Padrões de Detecção**:
 - `Aula N` → Pasta "Aula N" (ex: "Aula 5.mp4" → pasta "Aula 5")
-- `Boas Vindas` → Pasta "Capítulo de Projeto" (aceita: "boas-vindas", "boas_vindas", "boas vindas")
+- `Boas Vindas` → Pasta "Capítulo de Projeto"
+  (aceita: "boas-vindas", "boas_vindas", "boas vindas")
 - Outros vídeos → Permanecem na raiz
 
 **Execução**:
@@ -239,11 +250,13 @@ Menu Principal → [2] Modo Manual
 **Ideal para**: Desfazer a organização ou reorganizar de forma diferente.
 
 **O que faz**:
-- Move todos os vídeos das pastas "Aula N", "Capítulo de Projeto" e "Onboarding" de volta para a raiz
+- Move todos os vídeos das pastas "Aula N", "Capítulo de Projeto"
+  e "Onboarding" de volta para a raiz
 - Exclui as pastas vazias
 - Opcionalmente, remove os relatórios `.txt` existentes
 
-**Atenção**: Esta ação não pode ser desfeita automaticamente. Certifique-se de ter backup se necessário.
+**Atenção**: Esta ação não pode ser desfeita automaticamente. 
+Certifique-se de ter backup se necessário.
 
 **Execução**:
 ```
@@ -311,11 +324,13 @@ Acesse o menu de configurações pressionando `[3]` no menu principal.
 
 #### [8] Navegação por Setas
 - **Padrão**: Desabilitado (OFF)
-- **Função**: Alterna entre navegação por teclas instantâneas e navegação por cursor com setas
-- **Recomendado**: Desabilitado para usuários experientes (mais rápido), Habilitado para iniciantes
+- **Função**: Alterna entre navegação por teclas instantâneas
+  e navegação por cursor com setas
+- **Recomendado**: Desabilitado para usuários experientes (mais rápido)
 
 #### [9] Voltar ao Menu Principal
-- Retorna ao menu principal sem salvar alterações (as alterações são salvas automaticamente ao mudar cada opção)
+- Retorna ao menu principal sem salvar alterações
+  (as alterações são salvas automaticamente ao mudar cada opção)
 
 ### Hierarquia de Caminhos
 
@@ -343,7 +358,8 @@ As configurações são salvas em `config.json` na pasta da aplicação:
 }
 ```
 
-**Edição Manual**: Você pode editar este arquivo com o Bloco de Notas, mas certifique-se de manter a sintaxe JSON válida.
+**Edição Manual**: Você pode editar este arquivo com o Bloco de Notas, 
+mas certifique-se de manter a sintaxe JSON válida.
 
 ## 🔄 Sistema de Atualização
 
