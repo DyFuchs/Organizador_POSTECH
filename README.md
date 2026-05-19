@@ -7,9 +7,9 @@ Esta ferramenta foi projetada para rodar em ambientes Windows empresariais, não
 A maneira mais rápida de instalar a aplicação é através de um único comando. Este comando baixa a versão mais recente do GitHub e inicia o assistente de instalação.
 
 ## Passo a Passo:
-Abra a pasta onde você deseja que o programa seja instalado.
-Clique na barra de endereços da pasta, digite cmd e aperte Enter. Isso abrirá o Prompt de Comando já no local correto.
-Copie e cole o comando abaixo e aperte Enter:
+### $\rightarrow$ Abra a pasta onde você deseja que o programa seja instalado.
+### $\rightarrow$ Clique na barra de endereços da pasta, digite **cmd** e aperte **Enter**. Isso abrirá o Prompt de Comando já no local correto.
+## $\rightarrow$ Copie e cole o comando abaixo e aperte **Enter**:
 powershell
 
 ```javascript
