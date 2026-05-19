@@ -1,6 +1,28 @@
 # Updater.ps1 - Versão Dinâmica Simplificada
 param([switch]$Force)
 
+param([switch]$Force)
+
+# === AUTO-VERIFICAÇÃO DE CONFIGURAÇÃO ===
+$ConfigPath = Join-Path $PSScriptRoot "config.json"
+$ShouldUpdate = $Force
+
+if (-not $ShouldUpdate -and (Test-Path $ConfigPath)) {
+    try {
+        $cfg = Get-Content $ConfigPath -Raw | ConvertFrom-Json
+        if ($cfg.PSObject.Properties.Name -contains 'AutoUpdate') {
+            $ShouldUpdate = [bool]$cfg.AutoUpdate
+        }
+    } catch { $ShouldUpdate = $false }
+}
+
+if (-not $ShouldUpdate) {
+    Write-Host "[Updater] AutoUpdate desativado nas configuracoes. Pulando verificacao." -ForegroundColor Gray
+    return
+}
+Write-Host "[Updater] AutoUpdate ATIVO. Buscando atualizacoes..." -ForegroundColor Cyan
+# ==========================================
+
 $Repo = "DyFuchs/Organizador_POSTECH"
 $MainScript = "script.ps1"
 $VersionFile = "version.txt"
