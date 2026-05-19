@@ -9,17 +9,17 @@ set "REPO=DyFuchs/Organizador_POSTECH"
 set "BRANCH=main"
 
 :: LOGICA DE DIRETORIO PADRAO
-if "%~1"=="" (
-    set "DEFAULT_DIR=%~dp0"
+:: 1. Prioridade: Variavel de ambiente INSTALL_PATH (passada pelo comando PowerShell)
+:: 2. Fallback: Pasta onde o instalador reside (%~dp0)
+if not "%INSTALL_PATH%"=="" (
+    set "DEFAULT_DIR=%INSTALL_PATH%"
 ) else (
-    set "DEFAULT_DIR=%~1"
+    set "DEFAULT_DIR=%~dp0"
 )
 
-:: LIMPEZA ULTRA-ROBUSTA
-:: Remove aspas duplas (") e aspas simples (') do caminho
+:: Limpeza de segurança: Remove aspas e barra final
 set "DEFAULT_DIR=%DEFAULT_DIR:"=%"
 set "DEFAULT_DIR=%DEFAULT_DIR:'=%"
-:: Remove barra final se existir
 if "%DEFAULT_DIR:~-1%"=="\" set "DEFAULT_DIR=%DEFAULT_DIR:~0,-1%"
 
 :: ==============================================================================
@@ -83,7 +83,7 @@ if exist "%INSTALL_DIR%" (
     )
 )
 
-:: Criar pasta de instalacao (com aspas para suportar espaços)
+:: Criar pasta de instalacao
 mkdir "%INSTALL_DIR%" 2>nul
 
 :: ==============================================================================
@@ -142,7 +142,7 @@ echo.
 echo    Local: %INSTALL_DIR%
 echo    Atalho criado na Area de Trabalho
 echo.
-set /p "EXEC=    Deseja executar a aplicacao agora? [S/N]:, "
+set /p "EXEC=    Deseja executar a aplicacao agora? [S/N]: "
 if /i "!EXEC!"=="S" (
     start "" "%INSTALL_DIR%\Iniciar Organizador POSTECH.bat"
 )
