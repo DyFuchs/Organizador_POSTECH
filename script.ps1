@@ -8,7 +8,7 @@ param()
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 try { chcp 65001 > $null } catch {}
 
-$Version = "1.1.0"
+$Version = "1.2.0"
 $AppDir = $PSScriptRoot
 $WorkDir = (Get-Location).Path
 $ConfigPath = Join-Path $AppDir "config.json"
